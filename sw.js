@@ -1,5 +1,5 @@
-const CACHE='pm-shell-v7';
-const SHELL=['./','index.html','style.css','app.js','manifest.webmanifest?v=5','logo.png'];
+const CACHE='pm-shell-v8';
+const SHELL=['./','index.html','style.css','app.js','manifest.webmanifest?v=6','logo.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
 // Receive files/text shared from other Android apps (Share -> Open Scad).
