@@ -1,4 +1,4 @@
-name: Validate Parametric Maker
+name: Validate Open Scad
 
 on:
   pull_request:
