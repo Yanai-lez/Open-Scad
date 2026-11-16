@@ -26,7 +26,7 @@
    "purpose": "maskable"
   }
  ],
- "id": "/parametric-maker/",
+ "id": "/Open-Scad/",
  "share_target": {
   "action": "./share-target",
   "method": "POST",
