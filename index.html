@@ -47,10 +47,19 @@
     <div class="bar">
       <button id="btnUp">Upload file</button>
       <button id="btnPaste">Paste</button>
+      <button id="btnClear">Clear</button>
+      <button id="btnFind">Find</button>
+      <button id="btnLib">Library</button>
+      <button id="btnShare" hidden>Share</button>
       <button id="btnSave">Save .scad</button>
       <input id="file" type="file" style="display:none">
     </div>
-    <textarea id="code" placeholder="Paste OpenSCAD code here, or upload a .scad file" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+    <div id="findbar" hidden>
+      <input id="findIn" type="text" placeholder="Find" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <select id="findMode"><option value="text">Text</option><option value="line">Line</option></select>
+      <button id="findPrev">↑</button><button id="findNext">↓</button><span id="findCount"></span><button id="findClose">✕</button>
+    </div>
+    <div class="editor"><pre id="syntax" aria-hidden="true"></pre><textarea id="code" wrap="off" placeholder="Paste OpenSCAD code here, or upload a .scad file" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea></div>
   </section>
   <section id="view" class="pane"><canvas id="cv"></canvas><div id="status">Loading…</div></section>
 </main>
@@ -60,6 +69,9 @@
   <button data-t="view">Preview</button>
 </nav>
 
+<dialog id="libDlg"><h2>Library</h2><ul id="libList"></ul><button id="libClose">Close</button></dialog>
+<div id="toast" hidden></div>
 <script type="module" src="app.js"></script>
+<script type="module" src="editor.js"></script>
 </body>
 </html>

@@ -40,3 +40,24 @@ header h1 small{display:block}
 header button{padding:9px 10px;white-space:nowrap}
 
 header .logo{width:32px;height:32px;border-radius:8px;flex:none}
+
+/* editor: syntax colors + find highlight */
+.editor{position:relative;flex:1;min-height:0}
+#syntax,#code{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:10px;border:1px solid var(--line);border-radius:10px;font:13px/1.5 ui-monospace,monospace;tab-size:2;white-space:pre;direction:ltr;text-align:left;letter-spacing:0}
+#syntax{background:var(--card);color:var(--tx);overflow:hidden;pointer-events:none}
+#code{background:transparent;color:transparent;caret-color:var(--tx);overflow:auto;border-color:transparent}
+#code::placeholder{color:var(--mut)}
+.tc{color:#6a9955}.ts{color:#ce9178}.tn{color:#b5cea8}.tk{color:#c586c0}.tb{color:#dcdcaa}.tv{color:#4fc1ff}
+#syntax mark{background:#f5c542;color:#000;border-radius:3px}
+#findbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+#findbar[hidden]{display:none}
+#findIn{flex:1;min-width:0}
+#findCount{font-size:12px;color:var(--mut);min-width:48px}
+#toast{position:fixed;left:12px;right:12px;bottom:70px;z-index:50;background:#222a;backdrop-filter:blur(6px);background:#262b36;border:1px solid var(--line);padding:10px 14px;border-radius:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;font-size:14px}
+#toast[hidden]{display:none}
+#libDlg{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:14px;width:min(92vw,420px);max-height:80vh}
+#libDlg::backdrop{background:#0009}
+#libList{list-style:none;padding:0;margin:0 0 12px;display:flex;flex-direction:column;gap:8px}
+#libList li{display:flex;gap:8px;align-items:center}
+#libList .n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#libList .m{color:var(--mut);font-size:12px}

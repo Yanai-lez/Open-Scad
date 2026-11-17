@@ -414,6 +414,7 @@ function loadCode(text,name){
   $('#code').value=text;params=[];build();tab('params');schedule();
 }
 $('#code').value='';build();tab('codepane');
+window.__om={loadCode,tab,setName:n=>{fileName=n;},getName:()=>fileName};
 
 /* ---------- Open shared / opened files ---------- */
 (async()=>{
