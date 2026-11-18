@@ -111,10 +111,10 @@ function renderLib(){
 $('#btnLib').onclick=()=>{renderLib();$('#libDlg').showModal();};
 $('#libClose').onclick=()=>$('#libDlg').close();
 $('#libDlg').addEventListener('click',e=>{if(e.target===$('#libDlg'))$('#libDlg').close();});
-$('#btnSave').addEventListener('click',()=>{
-  if(!code.value.trim())return;
-  const name=om.getName?om.getName():'model';
+document.addEventListener('scad-saved',ev=>{
+  const name=ev.detail.name;
   toast(addToLib(name,code.value)?'Saved "'+name+'.scad" and added it to your library.':'Saved "'+name+'.scad". (Library storage is unavailable.)');
+  saveDraft();
 });
 
 /* ---------- Share ---------- */

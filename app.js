@@ -386,7 +386,15 @@ function to3mf(list){
 }
 function save(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);}
 $('#btnDl').onclick=()=>{if(!results)return;const l=results.filter(r=>r.exp);if(l.length)save(to3mf(l),fileName+'.3mf');};
-$('#btnSave').onclick=()=>{const t=$('#code').value;if(!t.trim())return;save(new Blob([t],{type:'text/plain'}),fileName+'.scad');};
+$('#btnSave').onclick=()=>{
+  const t=$('#code').value;if(!t.trim())return;
+  const ans=prompt('File name:',fileName);
+  if(ans===null)return;
+  const n=ans.trim().replace(/\.scad$/i,'').replace(/[^\p{L}\p{N}_.\- ]/gu,'_').trim()||'model';
+  fileName=n;
+  save(new Blob([t],{type:'text/plain'}),n+'.scad');
+  document.dispatchEvent(new CustomEvent('scad-saved',{detail:{name:n}}));
+};
 
 /* ---------- Load code ---------- */
 $('#btnUp').onclick=()=>$('#file').click();
