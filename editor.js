@@ -28,7 +28,7 @@ function pieces(text){
     const s=m.index,e=s+m[0].length;
     let c='';
     if(m[1])c='tc';else if(m[2])c='ts';else if(m[3])c='tv';else if(m[4])c='tn';
-    else if(m[5])c=KW.has(m[5])?'tk':BI.has(m[5])?'tb':'';
+    else if(m[5])c=KW.has(m[5])?'tk':(BI.has(m[5])||/^\s*\(/.test(text.slice(e,e+40)))?'tb':'ti';
     push(s,e,c);
   }
   return out;
