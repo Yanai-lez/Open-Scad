@@ -32,27 +32,26 @@ async function lib(name){
   return libCache[name];
 }
 const mkdirp=(FS,p)=>{let c='';for(const s of p.split('/').filter(Boolean)){c+='/'+s;try{FS.mkdir(c);}catch{}}};
-async function runScad(code,log){
-  const mod=await import(OSCAD);
+let worker=null,cancelJob=null,runId=0;
+function killWorker(){if(worker){worker.terminate();worker=null;}if(cancelJob){const c=cancelJob;cancelJob=null;c(new Error('cancelled'));}}
+async function runScad(code,log,my){
   const fnt=await fonts();const xf=await neededFonts(code);
   const libs=/\b(include|use)\s*<\s*BOSL2\//.test(code)?await lib('BOSL2'):null;
-  const uploads=params.filter(p=>p.t==='file'&&p.file);
-  const inst=await mod.default({noInitialRun:true,print:t=>log.push(t),printErr:t=>log.push(t),
-    preRun:[m=>{
-      m.ENV.FONTCONFIG_PATH='/fonts';m.ENV.OPENSCADPATH='/libraries';
-      mkdirp(m.FS,'/fonts');mkdirp(m.FS,'/tmp/fc');
-      for(const [f,d] of fnt)m.FS.writeFile(`/fonts/LiberationSans-${f}.ttf`,d);
-      for(const [fn,d] of xf)m.FS.writeFile('/fonts/'+fn,d);
-      m.FS.writeFile('/fonts/fonts.conf','<?xml version="1.0"?><!DOCTYPE fontconfig SYSTEM "fonts.dtd"><fontconfig><dir>/fonts</dir><cachedir>/tmp/fc</cachedir></fontconfig>');
-      if(libs){mkdirp(m.FS,'/libraries/BOSL2');for(const [f,d] of libs)m.FS.writeFile(`/libraries/BOSL2/${f}`,d);}
-      if(uploads.length){mkdirp(m.FS,'/uploads');for(const p of uploads)m.FS.writeFile(upPath(p),p.file.data);}
-    }]});
-  inst.FS.writeFile('/in.scad',code);
+  if(my!==runId)throw new Error('cancelled');
+  const uploads=params.filter(p=>p.t==='file'&&p.file).map(p=>[upPath(p),p.file.data]);
   const args=['/in.scad','-o','/out.3mf','--backend=manifold','--enable=textmetrics'];
   for(const p of params) if(p.dirty||(p.t==='file'&&p.file)) args.push(arg(p));
-  await new Promise(r=>setTimeout(r,20));
-  inst.callMain(args);
-  return new Uint8Array(inst.FS.readFile('/out.3mf'));
+  return new Promise((res,rej)=>{
+    const w=new Worker('./scadworker.js',{type:'module'});
+    worker=w;cancelJob=rej;
+    w.onmessage=ev=>{
+      w.terminate();if(worker===w){worker=null;cancelJob=null;}
+      log.push(...ev.data.log);
+      ev.data.ok?res(ev.data.out):rej(new Error(ev.data.msg));
+    };
+    w.onerror=ev=>{w.terminate();if(worker===w){worker=null;cancelJob=null;}rej(new Error(ev.message||'Could not start the OpenSCAD worker'));};
+    w.postMessage({code,args,fnt,xf,libs,uploads});
+  });
 }
 const $=s=>document.querySelector(s);
 
@@ -272,19 +271,21 @@ function show(model){
 
 /* ---------- OpenSCAD ---------- */
 let results=null;
-let timer=null,busy=false,again=false,renderedSrc=null;
+let timer=null,busy=false,renderedSrc=null,tick=null;
 function schedule(){clearTimeout(timer);timer=setTimeout(()=>render(true),500);}
 async function render(auto){
-  if(busy){again=true;return;}
   const st=$('#status'),src=$('#code').value;
   if(!src.trim()){st.textContent='No code yet. Paste or upload a file in the Code tab.';return;}
   if($('#code').value!==parsedSrc)build();
   const need=params.find(p=>p.t==='file'&&!p.file);
   if(need){st.textContent='Upload a file for "'+need.name.replace(/_/g,' ')+'" in the Parameters tab.';return;}
+  const my=++runId;killWorker();
   busy=true;
   const btn=$('#btnRender');
-  if(!auto)tab('view');btn.disabled=true;$('#btnDl').disabled=true;
-  st.textContent='Updating model…';
+  if(!auto)tab('view');btn.textContent='Stop';$('#btnDl').disabled=true;
+  let base='Updating model…';const t0=Date.now();
+  const say=()=>{const s=Math.floor((Date.now()-t0)/1000);st.textContent=base+' '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+  clearInterval(tick);say();tick=setInterval(say,1000);
   renderedSrc=src;
   const log=[];
   try{
@@ -294,8 +295,8 @@ async function render(auto){
     if(asm&&plates.length)jobs.unshift({id:'Assembly view',call:'mw_assembly_view();',exp:false});
     const res=[];
     for(const j of jobs){
-      st.textContent=jobs.length>1?`Building ${j.id}…`:'Building model…';
-      res.push({id:j.id,exp:j.exp,model:await parse3mf(await runScad(src+'\n'+j.call+'\n',log))});
+      base=jobs.length>1?`Building ${j.id}…`:'Building model…';say();
+      res.push({id:j.id,exp:j.exp,model:await parse3mf(await runScad(src+'\n'+j.call+'\n',log,my))});
     }
     results=res;
     const sel=$('#plateSel');
@@ -304,17 +305,24 @@ async function render(auto){
     sel.style.display=res.length>1?'':'none';
     if(res.some(r=>r.id===prev))sel.value=prev;
     showSel();
+    clearInterval(tick);
     {const w=[...new Set(log.filter(l=>/ERROR|WARNING/.test(l)))];st.textContent='Done ✔'+(w.length?' ('+w.length+' warning'+(w.length>1?'s':'')+')\n'+w.slice(0,3).join('\n'):'');}
     $('#btnDl').disabled=!res.some(r=>r.exp);
   }catch(e){
+    if(my!==runId)return;
+    clearInterval(tick);
     st.textContent='Error:\n'+(log.join('\n')||e.message||e);
   }
-  btn.disabled=false;busy=false;
-  if(again){again=false;schedule();}
+  if(my!==runId)return;
+  btn.textContent='Update';busy=false;
 }
 function showSel(){const r=results&&results.find(x=>x.id===$('#plateSel').value);if(r)show(r.model);}
 $('#plateSel').onchange=showSel;
-$('#btnRender').onclick=()=>render(false);
+function stopRender(){
+  runId++;killWorker();clearInterval(tick);busy=false;
+  $('#btnRender').textContent='Update';$('#status').textContent='Stopped. Tap Update to build again.';
+}
+$('#btnRender').onclick=()=>busy?stopRender():render(false);
 /* ---------- 3MF export ---------- */
 const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
 function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=crcT[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}

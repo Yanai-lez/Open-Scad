@@ -124,14 +124,12 @@ $('#btnShare').onclick=()=>{
 
 /* ---------- Find (text or line number) ---------- */
 const fb=$('#findbar'),fi=$('#findIn'),fm=$('#findMode'),fc=$('#findCount');
-let cw=7.8;try{const g=document.createElement('canvas').getContext('2d');g.font='13px ui-monospace, monospace';cw=g.measureText('M').width||7.8;}catch{}
-function reveal(s){
-  const text=code.value,before=text.slice(0,s),line=before.split('\n').length-1,col=s-(before.lastIndexOf('\n')+1);
-  code.scrollTop=Math.max(0,line*19.5-code.clientHeight/2);
-  code.scrollLeft=Math.max(0,col*cw-code.clientWidth/2);
+function reveal(){
+  const m=syn.querySelector('mark');if(!m)return;
+  code.scrollTop=Math.max(0,m.offsetTop-code.clientHeight/2);
 }
 function show(s,e){
-  hl={s,e};paint();reveal(s);
+  hl={s,e};paint();reveal();
   clearTimeout(hlTimer);hlTimer=setTimeout(()=>{hl=null;paint();},4000);
 }
 function lineRanges(){const r=[];let p=0;for(const l of code.value.split('\n')){r.push([p,p+l.length]);p+=l.length+1;}return r;}
