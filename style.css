@@ -47,7 +47,7 @@ header .logo{width:32px;height:32px;border-radius:8px;flex:none}
 #syntax{background:var(--card);color:var(--tx);overflow:hidden;pointer-events:none}
 #code{background:transparent;color:transparent;caret-color:var(--tx);overflow:auto;border-color:transparent}
 #code::placeholder{color:var(--mut)}
-.tc{color:#6a9955}.ts{color:#ce9178}.tn{color:#b5cea8}.tk{color:#c586c0}.tb{color:#dcdcaa}.tv{color:#4fc1ff}.ti{color:#9cdcfe}
+.tc{color:#6a9955}.ts{color:#ce9178}.tn{color:#b5cea8}.tk{color:#c586c0}.tb{color:#dcdcaa}.tv{color:#4fc1ff}.ti{color:#9cdcfe}.tm{color:#569cd6}.to{color:#56b6c2}.tz{color:#8b93a5}.th{color:#e5c07b;font-weight:700}.tp0{color:#ffd700}.tp1{color:#da70d6}.tp2{color:#179fff}
 #syntax mark{background:#f5c542;color:#000;border-radius:3px}
 #findbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
 #findbar[hidden]{display:none}

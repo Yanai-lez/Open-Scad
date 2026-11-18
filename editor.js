@@ -17,18 +17,27 @@ function toast(msg,label,fn){
 }
 
 /* ---------- Syntax colors (OpenSCAD) ---------- */
-const KW=new Set('module function if else for let each include use true false undef intersection_for assert echo'.split(' '));
+const KW=new Set('if else for let each intersection_for assert echo'.split(' '));
+const DEF=new Set('module function include use true false undef PI'.split(' '));
 const BI=new Set(('cube sphere cylinder polyhedron square circle polygon text translate rotate scale resize mirror multmatrix color offset hull minkowski union difference intersection linear_extrude rotate_extrude surface projection render children import import_stl import_dxf version lookup len concat sin cos tan asin acos atan atan2 abs sign floor ceil round sqrt pow exp ln log min max norm cross str chr ord search rands is_undef is_list is_num is_string is_bool is_function').split(' '));
 const RX=/(\/\*[\s\S]*?(?:\*\/|$)|\/\/[^\n]*)|("(?:\\[\s\S]|[^"\\\n])*"?)|(\$[A-Za-z_]\w*)|(\b\d+\.?\d*(?:[eE][+-]?\d+)?\b|\.\d+\b)|([A-Za-z_]\w*)|([\s\S])/g;
 const COLOR_MAX=300000;
 function pieces(text){
-  const out=[];let m;RX.lastIndex=0;
+  const out=[];let m,depth=0;RX.lastIndex=0;
   const push=(s,e,c)=>{const l=out[out.length-1];if(l&&l.c===c&&l.e===s)l.e=e;else out.push({s,e,c});};
   while((m=RX.exec(text))){
     const s=m.index,e=s+m[0].length;
     let c='';
-    if(m[1])c='tc';else if(m[2])c='ts';else if(m[3])c='tv';else if(m[4])c='tn';
-    else if(m[5])c=KW.has(m[5])?'tk':(BI.has(m[5])||/^\s*\(/.test(text.slice(e,e+40)))?'tb':'ti';
+    if(m[1])c=/^\/\*\s*\[[^\]]*\]\s*\*\/$/.test(m[1])?'th':'tc';
+    else if(m[2])c='ts';else if(m[3])c='tv';else if(m[4])c='tn';
+    else if(m[5])c=KW.has(m[5])?'tk':DEF.has(m[5])?'tm':(BI.has(m[5])||/^\s*\(/.test(text.slice(e,e+40)))?'tb':'ti';
+    else{
+      const ch=m[0];
+      if('([{'.includes(ch)){c='tp'+(depth%3);depth++;}
+      else if(')]}'.includes(ch)){depth=Math.max(0,depth-1);c='tp'+(depth%3);}
+      else if('+-*/%=<>!&|?:^~'.includes(ch))c='to';
+      else if(ch===','||ch===';'||ch==='.')c='tz';
+    }
     push(s,e,c);
   }
   return out;
