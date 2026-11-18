@@ -306,7 +306,7 @@ async function render(auto){
     if(res.some(r=>r.id===prev))sel.value=prev;
     showSel();
     clearInterval(tick);
-    {const w=[...new Set(log.filter(l=>/ERROR|WARNING/.test(l)))];st.textContent='Done ✔'+(w.length?' ('+w.length+' warning'+(w.length>1?'s':'')+')\n'+w.slice(0,3).join('\n'):'');}
+    {const w=[...new Set(log.filter(l=>/ERROR|WARNING/.test(l)))];const ms=Date.now()-t0,sec=Math.round(ms/1000),took=ms<10000?(ms/1000).toFixed(1)+'s':sec<60?sec+'s':Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');st.textContent='Done ✔ '+took+(w.length?' ('+w.length+' warning'+(w.length>1?'s':'')+')\n'+w.slice(0,3).join('\n'):'');}
     $('#btnDl').disabled=!res.some(r=>r.exp);
   }catch(e){
     if(my!==runId)return;
