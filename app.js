@@ -293,10 +293,13 @@ async function render(auto){
     const asm=/module\s+mw_assembly_view\s*\(/.test(src);
     const jobs=plates.length?plates.map(n=>({id:'Plate '+n,call:`mw_plate_${n}();`,exp:true})):[{id:'Model',call:'',exp:true}];
     if(asm&&plates.length)jobs.unshift({id:'Assembly view',call:'mw_assembly_view();',exp:false});
-    const res=[];
+    const res=[];const tm={scad:0,parse:0,show:0};window.__tm=tm;
     for(const j of jobs){
       base=jobs.length>1?`Building ${j.id}…`:'Building model…';say();
-      res.push({id:j.id,exp:j.exp,model:await parse3mf(await runScad(src+'\n'+j.call+'\n',log,my))});
+      const ta=Date.now();const bytes=await runScad(src+'\n'+j.call+'\n',log,my);
+      const tb=Date.now();const model=await parse3mf(bytes);
+      tm.scad+=tb-ta;tm.parse+=Date.now()-tb;
+      res.push({id:j.id,exp:j.exp,model});
     }
     results=res;
     const sel=$('#plateSel');
@@ -304,9 +307,12 @@ async function render(auto){
     sel.innerHTML='';for(const r of res){const o=document.createElement('option');o.value=r.id;o.textContent=r.id;sel.append(o);}
     sel.style.display=res.length>1?'':'none';
     if(res.some(r=>r.id===prev))sel.value=prev;
-    showSel();
+    const ts=Date.now();showSel();tm.show=Date.now()-ts;
     clearInterval(tick);
-    {const w=[...new Set(log.filter(l=>/ERROR|WARNING/.test(l)))];const ms=Date.now()-t0,sec=Math.round(ms/1000),took=ms<10000?(ms/1000).toFixed(1)+'s':sec<60?sec+'s':Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');st.textContent='Done ✔ '+took+(w.length?' ('+w.length+' warning'+(w.length>1?'s':'')+')\n'+w.slice(0,3).join('\n'):'');}
+    {const w=[...new Set(log.filter(l=>/ERROR|WARNING/.test(l)))];const ms=Date.now()-t0,sec=Math.round(ms/1000),took=ms<10000?(ms/1000).toFixed(1)+'s':sec<60?sec+'s':Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');const gm=log.map(l=>l.match(/Total rendering time:\s*(\d+):(\d+):([\d.]+)/)).filter(Boolean).reduce((s,m)=>s+(+m[1]*3600+ +m[2]*60+ +m[3])*1000,0);
+    const f=x=>x<10000?(x/1000).toFixed(1)+'s':Math.round(x/1000)+'s';
+    const detail=gm?' (script '+f(Math.max(0,tm.scad-gm))+' · geometry '+f(gm)+' · display '+f(tm.parse+tm.show)+')':'';
+    st.textContent='Done ✔ '+took+detail+(w.length?' ('+w.length+' warning'+(w.length>1?'s':'')+')\n'+w.slice(0,3).join('\n'):'');}
     $('#btnDl').disabled=!res.some(r=>r.exp);
   }catch(e){
     if(my!==runId)return;
